@@ -1,7 +1,3 @@
-/* jshint esversion: 8, browser: true, devel: true */
-// Tells JSHint this file uses modern JavaScript (async/await), runs in
-// a browser, and uses the browser's built-in pop-ups like prompt().
-
 // ── Hamburger menu ───────────────────────────────────
 const menuBtn   = document.getElementById('menuBtn');
 const menuClose = document.getElementById('menuClose');
@@ -34,15 +30,10 @@ document.querySelectorAll('.snap-section').forEach(section => {
 });
 
 
-/* ══ PHOTO BOOTH (breathing.html only) ═══════════════
-   Wrapped in a function so its variables stay private and can't
-   collide with anything above. The guard on the first line means
-   this file is safe to load on every page — on the home page,
-   timer or task manager there is no #stage element, so the whole
-   booth simply switches itself off.                              */
+/* -- PHOTO BOOTH  -- */
 function initPhotoBooth() {
   if (!document.getElementById('stage')) return;   // not the booth page
-  /* ── elements ───────────────────────────────────────── */
+  /* ── elements ──────────── */
   const video     = document.getElementById('video');
   const stage     = document.getElementById('stage');
   const stageMsgText = document.getElementById('stageMsgText');
@@ -58,35 +49,14 @@ function initPhotoBooth() {
   const slots     = [...document.querySelectorAll('.slot')];
   const stripEl   = document.getElementById('strip');
 
-  /* ── STATE ───────────────────────────────────────────
-     Everything the page needs to know, in four variables. Any time one
-     of these changes we call render() to redraw the strip from it. This
-     is the "single source of truth" idea — the screen is always a
-     picture of these variables, so the two can never drift apart.
-
-     shots  : the 4 slots. null = empty. Photos are stored UNFILTERED as
-              base64 data URLs, and the filter is applied when drawing.
-              That's why switching filters instantly restyles photos you
-              already took — the originals were never modified.
-     stream : the live MediaStream from the webcam, or null if the camera
-              hasn't been opened. Also used as the "is the camera on?"
-              flag that decides what the main button does.
-     busy   : true while a countdown sequence is running. Every button
-              checks this so you can't start a second capture mid-shot.
-     filter : which filter is currently selected.
-     OUT    : every captured photo is normalised to 720x720, so webcam
-              shots and uploaded photos are always the same size.        */
+  /* ── STATE ───────────────────────────────────────────*/
   const OUT = 720;                 // captured square size in px
-  let shots  = [null, null, null, null];   // raw (unfiltered) data URLs
+  let shots  = [null, null, null, null];   // raw (unfiltered) URLs
   let stream = null;
   let busy   = false;
   let filter = 'none';
 
-  /* Filters are plain CSS filter strings. Storing them in one object
-     means the same value can be reused in three places: the live video
-     preview, the <img> tags in the strip, and the download canvas
-     (canvas has a ctx.filter property that accepts identical syntax).
-     Add a new look by adding one line here plus one chip button.        */
+  /* Filters are plain CSS filter strings. Storing them in one objet----    */
   const FILTERS = {
     none:  'none',
     bw:    'grayscale(1) contrast(1.08)',
@@ -96,38 +66,17 @@ function initPhotoBooth() {
     dream: 'saturate(1.15) brightness(1.12) contrast(.92) blur(.4px)'
   };
 
-  /* toast(): the little black pill that slides up at the bottom.
-     clearTimeout on each call cancels the previous hide-timer, so rapid
-     messages don't fight each other — the newest one always gets its
-     full display time.                                                  */
   const toast = (msg, ms = 2600) => {
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toastEl.classList.remove('show'), ms);
   };
-
-  /* sleep(): wraps setTimeout in a Promise so we can write
-     'await sleep(1000)' inside an async function. This is what lets the
-     countdown read like a straight list of steps instead of a nest of
-     callbacks — see countTo() below.                                    */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  /* ── OPENING THE CAMERA ──────────────────────────────
-     getUserMedia() asks the browser for camera access and returns a
-     Promise. It's async because the user has to click Allow first — the
-     await pauses here until they respond.
-
-     Two things commonly make this fail, so both are handled explicitly:
-       NotAllowedError — the user (or a previous 'Block') denied it
-       NotFoundError   — no camera hardware
-     There's also the file:// case: browsers only expose cameras on
-     "secure contexts" (https or localhost), so double-clicking the HTML
-     file will always fail. The check on location.protocol catches that
-     and explains it rather than showing a confusing generic error.
-
-     Whatever happens we return true/false so the caller knows whether
-     it's safe to continue into a capture sequence.                      */
+  /* ── camera permission ──────────────────────
+     getUserMedia() asks the browser for camera access. It's async because the user has to click [Allow] first and waits until they respond
+     Whatever happens, we return true/false so the caller knows whether it's safe to continue into a capture sequence.                      */
   async function startCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       stageMsgText.innerHTML = 'This browser can\'t reach the camera.<br>Try uploading photos instead.';
@@ -147,11 +96,6 @@ function initPhotoBooth() {
       toast('Camera ready — press Take 4 photos.');
       return true;
     } catch (err) {
-      /* iOS has a long history of blocking the camera in home-screen
-         apps, and it forgets the permission between launches. If we're
-         running standalone on an iPhone, that's by far the most likely
-         cause — so say so, and give the workaround that actually
-         works: open the same page in Safari instead.                 */
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const standalone = window.matchMedia('(display-mode: standalone)').matches ||
@@ -172,14 +116,6 @@ function initPhotoBooth() {
   }
 
   /* ── CAPTURING ONE SQUARE FRAME ──────────────────────
-     This is the heart of the booth. A <video> element can be handed
-     straight to canvas drawImage(), which grabs whatever frame is on
-     screen at that instant.
-
-     The 9-argument form of drawImage is what does the cropping:
-       drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-                         └── region to take FROM ──┘ └── where to put IT ┘
-
      A webcam gives 1280x720 (landscape), so we take the biggest centred
      square — 720x720 starting 280px from the left — and paint it into a
      720x720 canvas. Nothing is squashed, the sides are simply trimmed.
@@ -206,11 +142,7 @@ function initPhotoBooth() {
     return c.toDataURL('image/png');
   }
 
-  /* countTo(): shows 3, 2, 1 with a one-second gap.
-     Rewriting innerHTML each tick replaces the <span>, and because a
-     brand-new element is created the CSS 'pop' animation restarts from
-     the beginning every number. Reusing the same span would only animate
-     once.                                                               */
+  /* countTo(): shows 3, 2, 1 with a one-second gap.  */
   async function countTo(n) {
     countdown.classList.add('show');
     for (let i = n; i > 0; i--) {
@@ -221,29 +153,13 @@ function initPhotoBooth() {
     countdown.innerHTML = '';
   }
 
-  /* captureInto(): the full ritual for ONE photo —
-     label it, count down, flash, grab the frame, breathe.
-     Written as a separate function because two different flows need it:
-     the automatic 4-shot run, and a single retake. Note the capture
-     happens on the same line the flash starts, so the photo is taken at
-     the peak of the white flash, exactly like a real camera.            */
-  /* 'step' and 'ofN' are only for the on-screen counter. They're
-     separate from 'index' because the shots being taken may not be
-     slots 1-4 any more — if two slots are already filled by uploads,
-     this is "Shot 1 of 2" while writing into slot 3.               */
   async function captureInto(index, step, ofN) {
     shotPip.textContent = 'Shot ' + (step || index + 1) + ' of ' + (ofN || 4);
     shotPip.classList.add('show');
     await countTo(3);
 
     /* Light FIRST, then shoot. The screen going white acts as a fill
-       light on your face, but the browser needs a moment to actually
-       paint it and the webcam needs a moment to adjust its exposure to
-       the extra brightness. Capturing on the same line as the flash
-       would grab the frame before any of that happened — you'd get the
-       animation but none of the lighting benefit.
-
-       260ms lands inside the 315ms the flash holds at full white.     */
+       light on your face  */
     flash.classList.add('fire');
     await sleep(260);
     const data = grabSquare();
