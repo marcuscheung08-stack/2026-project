@@ -13,12 +13,6 @@
 
   <!-- Site CSS — timer styles are in here under "TIMER" -->
   <link rel="stylesheet" href="style.css?v=2">
-
-  <!-- ══ INSTALLABLE APP (PWA) ══════════════════════════
-       manifest = the app's name, icons and colours.
-       theme-color tints the phone's status bar.
-       The apple-* tags are iOS-only; iOS ignores the manifest for
-       home-screen apps and reads these instead.                   -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#2B2B2B">
   <meta name="mobile-web-app-capable" content="yes">
@@ -30,7 +24,7 @@
 
 <body>
 
-  <!-- ── NAV ──────────────────────────────────────────── -->
+  <!--  NAV  -->
   <nav class="nav-bar">
     <div></div>
     <a class="nav-logo" href="index.html" aria-label="HELPFUL — back to home">HELPFUL</a>
@@ -48,7 +42,7 @@
     <a href="breathing.html">Photo Booth</a>
   </div>
 
-  <!-- ── TIMER ────────────────────────────────────────── -->
+  <!-- TIMER  -->
   <main class="timer-page">
     <h1 class="timer-title">5 Min Timer</h1>
     <p class="timer-sub">Five minutes is short enough that starting doesn't feel like a decision.</p>
@@ -68,19 +62,10 @@
         Set it, press start, and work until it stops.
       </p>
     </details>
-
-    <!-- the ring and the digits sit on top of each other.
-         TO REVERT THE DOODLE LOOK: delete the word "doodle" from the
-         class below. Everything else stays where it is and the timer
-         goes straight back to the clean version. -->
     <div class="timer-dial doodle" id="dial">
       <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
         <defs>
-          <!-- Hand-drawn wobble. feTurbulence makes a cloud of random
-               noise, and feDisplacementMap pushes each pixel sideways
-               by however bright the noise is at that point. The result
-               is a line that wanders slightly, like a pen stroke.
-               Only used when the dial has the "doodle" class.        -->
+
           <filter id="roughen" x="-20%" y="-20%" width="140%" height="140%">
             <feTurbulence type="fractalNoise" baseFrequency="0.035"
                           numOctaves="3" seed="7" result="noise"/>
@@ -95,12 +80,8 @@
           </filter>
         </defs>
 
-        <!-- the faint track underneath -->
         <circle class="ring-track" cx="120" cy="120" r="108"></circle>
-        <!-- a second, rougher pass so the ring looks drawn twice —
-             hidden unless the doodle look is on -->
         <circle class="ring-sketch" cx="120" cy="120" r="108"></circle>
-        <!-- the coloured arc that empties as time runs out -->
         <circle class="ring-fill" id="ringFill" cx="120" cy="120" r="108"></circle>
       </svg>
 
@@ -110,9 +91,6 @@
       </div>
     </div>
 
-    <!-- duration controls. These used to disappear once the clock was
-         running; now they stay, so you can add a minute mid-session
-         without losing your place. Hold + or − to change faster. -->
     <div class="adjust" id="adjust">
       <button class="adj-btn" id="minusBtn" aria-label="Less time">−</button>
       <span class="adj-label" id="adjLabel">5 minutes</span>

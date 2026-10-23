@@ -1,7 +1,3 @@
-/* jshint esversion: 8, browser: true, devel: true */
-// Tells JSHint this file uses modern JavaScript (async/await), runs in
-// a browser, and uses the browser's built-in pop-ups like prompt().
-
 // ── Hamburger menu ───────────────────────────────────
 const menuBtn   = document.getElementById('menuBtn');
 const menuClose = document.getElementById('menuClose');
@@ -34,12 +30,7 @@ document.querySelectorAll('.snap-section').forEach(section => {
 });
 
 
-/* ══ PHOTO BOOTH (breathing.html only) ═══════════════
-   Wrapped in a function so its variables stay private and can't
-   collide with anything above. The guard on the first line means
-   this file is safe to load on every page — on the home page,
-   timer or task manager there is no #stage element, so the whole
-   booth simply switches itself off.                              */
+/* ══ PHOTO BOOTH (breathing.html only)   */
 function initPhotoBooth() {
   if (!document.getElementById('stage')) return;   // not the booth page
   /* ── elements ───────────────────────────────────────── */
@@ -58,35 +49,12 @@ function initPhotoBooth() {
   const slots     = [...document.querySelectorAll('.slot')];
   const stripEl   = document.getElementById('strip');
 
-  /* ── STATE ───────────────────────────────────────────
-     Everything the page needs to know, in four variables. Any time one
-     of these changes we call render() to redraw the strip from it. This
-     is the "single source of truth" idea — the screen is always a
-     picture of these variables, so the two can never drift apart.
-
-     shots  : the 4 slots. null = empty. Photos are stored UNFILTERED as
-              base64 data URLs, and the filter is applied when drawing.
-              That's why switching filters instantly restyles photos you
-              already took — the originals were never modified.
-     stream : the live MediaStream from the webcam, or null if the camera
-              hasn't been opened. Also used as the "is the camera on?"
-              flag that decides what the main button does.
-     busy   : true while a countdown sequence is running. Every button
-              checks this so you can't start a second capture mid-shot.
-     filter : which filter is currently selected.
-     OUT    : every captured photo is normalised to 720x720, so webcam
-              shots and uploaded photos are always the same size.        */
+  /* ── STATE ───────────────────────────────────────────     */
   const OUT = 720;                 // captured square size in px
   let shots  = [null, null, null, null];   // raw (unfiltered) data URLs
   let stream = null;
   let busy   = false;
   let filter = 'none';
-
-  /* Filters are plain CSS filter strings. Storing them in one object
-     means the same value can be reused in three places: the live video
-     preview, the <img> tags in the strip, and the download canvas
-     (canvas has a ctx.filter property that accepts identical syntax).
-     Add a new look by adding one line here plus one chip button.        */
   const FILTERS = {
     none:  'none',
     bw:    'grayscale(1) contrast(1.08)',
@@ -96,10 +64,6 @@ function initPhotoBooth() {
     dream: 'saturate(1.15) brightness(1.12) contrast(.92) blur(.4px)'
   };
 
-  /* toast(): the little black pill that slides up at the bottom.
-     clearTimeout on each call cancels the previous hide-timer, so rapid
-     messages don't fight each other — the newest one always gets its
-     full display time.                                                  */
   const toast = (msg, ms = 2600) => {
     toastEl.textContent = msg;
     toastEl.classList.add('show');
@@ -107,27 +71,9 @@ function initPhotoBooth() {
     toast._t = setTimeout(() => toastEl.classList.remove('show'), ms);
   };
 
-  /* sleep(): wraps setTimeout in a Promise so we can write
-     'await sleep(1000)' inside an async function. This is what lets the
-     countdown read like a straight list of steps instead of a nest of
-     callbacks — see countTo() below.                                    */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  /* ── OPENING THE CAMERA ──────────────────────────────
-     getUserMedia() asks the browser for camera access and returns a
-     Promise. It's async because the user has to click Allow first — the
-     await pauses here until they respond.
-
-     Two things commonly make this fail, so both are handled explicitly:
-       NotAllowedError — the user (or a previous 'Block') denied it
-       NotFoundError   — no camera hardware
-     There's also the file:// case: browsers only expose cameras on
-     "secure contexts" (https or localhost), so double-clicking the HTML
-     file will always fail. The check on location.protocol catches that
-     and explains it rather than showing a confusing generic error.
-
-     Whatever happens we return true/false so the caller knows whether
-     it's safe to continue into a capture sequence.                      */
+  /* ── OPENING THE CAMERA ──────────────────────────────            */
   async function startCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       stageMsgText.innerHTML = 'This browser can\'t reach the camera.<br>Try uploading photos instead.';
@@ -147,11 +93,6 @@ function initPhotoBooth() {
       toast('Camera ready — press Take 4 photos.');
       return true;
     } catch (err) {
-      /* iOS has a long history of blocking the camera in home-screen
-         apps, and it forgets the permission between launches. If we're
-         running standalone on an iPhone, that's by far the most likely
-         cause — so say so, and give the workaround that actually
-         works: open the same page in Safari instead.                 */
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const standalone = window.matchMedia('(display-mode: standalone)').matches ||
@@ -171,26 +112,6 @@ function initPhotoBooth() {
     }
   }
 
-  /* ── CAPTURING ONE SQUARE FRAME ──────────────────────
-     This is the heart of the booth. A <video> element can be handed
-     straight to canvas drawImage(), which grabs whatever frame is on
-     screen at that instant.
-
-     The 9-argument form of drawImage is what does the cropping:
-       drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-                         └── region to take FROM ──┘ └── where to put IT ┘
-
-     A webcam gives 1280x720 (landscape), so we take the biggest centred
-     square — 720x720 starting 280px from the left — and paint it into a
-     720x720 canvas. Nothing is squashed, the sides are simply trimmed.
-
-     The translate + scale(-1, 1) pair mirrors the drawing horizontally.
-     It's needed because the CSS mirrors the preview; without it your
-     photo would come out the opposite way round from what you posed
-     for, and any text in shot would read backwards.
-
-     toDataURL() then serialises the canvas into a base64 PNG string we
-     can drop straight into an <img src>.                                */
   function grabSquare() {
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) return null;
@@ -206,11 +127,6 @@ function initPhotoBooth() {
     return c.toDataURL('image/png');
   }
 
-  /* countTo(): shows 3, 2, 1 with a one-second gap.
-     Rewriting innerHTML each tick replaces the <span>, and because a
-     brand-new element is created the CSS 'pop' animation restarts from
-     the beginning every number. Reusing the same span would only animate
-     once.                                                               */
   async function countTo(n) {
     countdown.classList.add('show');
     for (let i = n; i > 0; i--) {
@@ -221,29 +137,10 @@ function initPhotoBooth() {
     countdown.innerHTML = '';
   }
 
-  /* captureInto(): the full ritual for ONE photo —
-     label it, count down, flash, grab the frame, breathe.
-     Written as a separate function because two different flows need it:
-     the automatic 4-shot run, and a single retake. Note the capture
-     happens on the same line the flash starts, so the photo is taken at
-     the peak of the white flash, exactly like a real camera.            */
-  /* 'step' and 'ofN' are only for the on-screen counter. They're
-     separate from 'index' because the shots being taken may not be
-     slots 1-4 any more — if two slots are already filled by uploads,
-     this is "Shot 1 of 2" while writing into slot 3.               */
   async function captureInto(index, step, ofN) {
     shotPip.textContent = 'Shot ' + (step || index + 1) + ' of ' + (ofN || 4);
     shotPip.classList.add('show');
     await countTo(3);
-
-    /* Light FIRST, then shoot. The screen going white acts as a fill
-       light on your face, but the browser needs a moment to actually
-       paint it and the webcam needs a moment to adjust its exposure to
-       the extra brightness. Capturing on the same line as the flash
-       would grab the frame before any of that happened — you'd get the
-       animation but none of the lighting benefit.
-
-       260ms lands inside the 315ms the flash holds at full white.     */
     flash.classList.add('fire');
     await sleep(260);
     const data = grabSquare();
@@ -253,16 +150,6 @@ function initPhotoBooth() {
     await sleep(700);
   }
 
-  /* runSequence(): the automatic 4-shot run.
-     Because captureInto() is awaited, this loop pauses ~3.7 seconds each
-     time round — a plain for-loop without await would fire all four
-     captures in the same millisecond and give four identical photos.
-     'busy' is raised before the loop and lowered after, which is what
-     locks the buttons for the whole ~15-second run.                     */
-  /* Fill only the EMPTY slots. The old version always ran 0,1,2,3, so
-     if you'd uploaded a photo first it got overwritten by shot one.
-     Now uploads and camera shots share the strip properly, and if
-     every slot is full it starts fresh rather than doing nothing.   */
   async function runSequence() {
     let targets = [];
     for (let i = 0; i < 4; i++) if (!shots[i]) targets.push(i);
@@ -290,22 +177,14 @@ function initPhotoBooth() {
     busy = false; setButtons();
   }
 
-  /* The main button does two different jobs depending on state, which is
-     why it's one button and not two. First press = open the camera (and
-     stop there, so you can check your framing). Second press = run the
-     sequence. setButtons() relabels it to match.                        */
+
   startBtn.addEventListener('click', async function () {
     if (busy) return;
     if (!stream) { await startCamera(); return; }   // first press opens the camera
     runSequence();                                   // second press starts the 4 shots
   });
 
-  /* ── UPLOADS ─────────────────────────────────────────
-     The real <input type="file"> is hidden because browsers barely let
-     you style it. Clicking our pretty button programmatically clicks the
-     hidden input instead — a standard trick.                            */
-  /* null = "fill the empty slots in order". A number means a specific
-     slot asked for a photo, set by the Upload button inside that slot. */
+  /* ── UPLOADS ─────────────────────────────────────────*/
   let uploadTarget = null;
 
   uploadBtn.addEventListener('click', function () {
@@ -319,8 +198,6 @@ function initPhotoBooth() {
 
     let placed = 0;
     for (const f of files) {
-      /* a slot asked by name? use it, then fall back to filling gaps
-         for any further files in the same selection */
       let idx;
       if (uploadTarget !== null) { idx = uploadTarget; uploadTarget = null; }
       else                       { idx = shots.indexOf(null); }
@@ -331,18 +208,9 @@ function initPhotoBooth() {
     }
     uploadTarget = null;
     if (placed) toast('Added ' + placed + ' photo' + (placed > 1 ? 's' : '') + '.');
-    /* Resetting .value matters: without it, picking the SAME file twice
-       in a row fires no 'change' event, because the value didn't change. */
     fileInput.value = '';
   });
 
-  /* fileToSquare(): put an uploaded photo through the identical
-     centre-crop as a webcam shot, so mixed sources look consistent in
-     the strip. Image loading is asynchronous, hence the Promise wrapper
-     — the pixels don't exist until img.onload fires.
-     createObjectURL makes a temporary local reference to the file;
-     revokeObjectURL releases it afterwards so memory isn't leaked. The
-     file never leaves the computer.                                     */
   function fileToSquare(file) {
     return new Promise(function (resolve, reject) {
       const url = URL.createObjectURL(file);
@@ -403,26 +271,14 @@ function initPhotoBooth() {
      Add your own art by dropping transparent PNGs into the stickers/
      folder and listing the filenames here. JavaScript can't read a
      folder's contents, so this list is how it knows what exists — if a
-     file is missing its swatch quietly removes itself from the tray.
-
-     Positions are stored as FRACTIONS of the strip (0 to 1), never
-     pixels. That's the whole trick: the strip is ~300px wide on screen
-     but 668px on the download canvas, and fractions map onto both
-     without any conversion maths.                                     */
+     file is missing its swatch quietly removes itself from the tray.       */
   const STICKER_DIR   = '';
   const STICKER_FILES = ['Bearlogo3.png','stickers/TEST2_S1.png', 'stickers/TEST2.png', 'stickers/TEST2_S2.png', 'stickers/TEST2_S3.png', 'stickers/TEST3_F.png',];/*---------Sticker eddition edit line Uploads here-----------------*/
-  /* Sticker width as a fraction of the strip's width.
-     One photo is 600px of the strip's 668px, so 0.90 makes a sticker
-     exactly one photo wide. Reference points:
-       0.22  a quarter of a photo      0.67  three-quarters
-       0.45  half a photo              0.90  exactly one photo
-     Export art at roughly 2x the drawn size to stay crisp —
-     at 0.90 that's a 1200 x 1200px PNG.                              */
   const STICKER_W     = 0.90;
-  let placed = [];                     // [{ src, x, y }] — x/y are 0-1
+  let placed = [];                     
 
   /* Push STICKER_W into CSS so the on-screen size is driven by the same
-     number as the download. Change STICKER_W alone and both follow.   */
+     number as the download.  */
   stripEl.style.setProperty('--sticker-w', (STICKER_W * 100) + '%');
 
   const tray              = document.getElementById('stickerTray');
@@ -430,13 +286,6 @@ function initPhotoBooth() {
   const stickerUploadBtn  = document.getElementById('stickerUploadBtn');
   const stickerUpload     = document.getElementById('stickerUpload');
 
-  /* addSwatch(): builds one tappable thumbnail in the tray.
-     Used for both sources — the presets above and anything you upload —
-     so uploaded art behaves identically to art in the folder.
-
-     'missingRemoves' is only true for presets: if the file isn't in the
-     stickers/ folder the swatch deletes itself rather than showing a
-     broken image. Uploads can't fail that way.                        */
   function addSwatch(src, label, missingRemoves) {
     const b  = document.createElement('button');
     const im = document.createElement('img');
@@ -459,13 +308,7 @@ function initPhotoBooth() {
 
   /* ── UPLOADING YOUR OWN STICKERS ─────────────────────
      Each file is read into an <img>, redrawn onto a canvas at no more
-     than 512px on its longest side, and stored as a PNG data URL.
-
-     Three reasons for the canvas round-trip rather than using the file
-     directly: it caps the memory a huge photo would eat, PNG output
-     preserves transparency (a JPEG would fill it with black), and a
-     data URL is same-origin so it can never taint the download canvas
-     the way a linked file can.                                        */
+     than 512px on its longest side, and stored as a PNG data URL.            */
   stickerUploadBtn.addEventListener('click', function () { stickerUpload.click(); });
 
   stickerUpload.addEventListener('change', async function (e) {
@@ -495,9 +338,6 @@ function initPhotoBooth() {
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = function () {
-        /* Uploads keep their full resolution — no downscaling.
-           To cap them again, set MAX to a pixel size and multiply
-           w/h by Math.min(1, MAX / Math.max(img.width, img.height)). */
         const w = img.width;
         const h = img.height;
         const c = document.createElement('canvas');
@@ -510,9 +350,6 @@ function initPhotoBooth() {
       img.src = url;
     });
   }
-
-  /* Drop a new sticker near the middle, jittered slightly so tapping
-     the same one twice doesn't hide one perfectly behind the other.   */
   function addSticker(src) {
     placed.push({
       src: src,
@@ -523,9 +360,6 @@ function initPhotoBooth() {
     toast('Sticker added — drag it where you want.');
   }
 
-  /* Stickers are direct children of .strip, while photos live inside
-     .slot elements. render() only rewrites the slots, so stickers are
-     never disturbed by taking or filtering photos.                    */
   function renderStickers() {
     [].slice.call(stripEl.querySelectorAll('.placed')).forEach(function (n) { n.remove(); });
     placed.forEach(function (s, i) {
@@ -550,15 +384,6 @@ function initPhotoBooth() {
     toast('Removed ' + n + ' sticker' + (n > 1 ? 's' : '') + '.');
   });
 
-  /* DRAGGING — pointer events cover mouse, touch and stylus in one API.
-     setPointerCapture routes every move to this element even if the
-     cursor outruns it, which is what stops the sticker being dropped
-     the moment you move quickly.
-
-     getBoundingClientRect() gives the strip's live position and size on
-     screen; subtracting it converts a page coordinate into a fraction
-     of the strip. Clamping to 0-1 keeps stickers from being lost off
-     the edge.                                                          */
   let drag = null;
 
   stripEl.addEventListener('pointerdown', function (e) {
@@ -589,12 +414,7 @@ function initPhotoBooth() {
   stripEl.addEventListener('pointerup', endDrag);
   stripEl.addEventListener('pointercancel', endDrag);
 
-  /* EVENT DELEGATION
-     The Retake buttons are destroyed and recreated on every render, so
-     listeners attached directly to them would die instantly. Instead one
-     listener sits on the parent strip, which never changes, and
-     .closest() works out whether the click landed on a Retake button.
-     One listener, works forever, no rebinding.                          */
+  /* EVENT DELEGATION     */
   stripEl.addEventListener('click', function (e) {
     const btn = e.target.closest('.retake');
     if (btn) { retake(+btn.dataset.i); return; }
@@ -607,10 +427,6 @@ function initPhotoBooth() {
     }
   });
 
-  /* setButtons(): the only place button enabled/disabled state and the
-     main button's label are decided. Called after anything that changes
-     state, so the controls can never contradict what's actually going
-     on — e.g. you can't hit Download mid-countdown.                     */
   function setButtons() {
     const any = shots.some(Boolean);
     downloadBtn.disabled = !any || busy;
@@ -629,46 +445,10 @@ function initPhotoBooth() {
     toast('Strip cleared.');
   });
 
-  /* ── DOWNLOAD: FLATTEN THE STRIP INTO ONE PNG ────────
-     The on-screen strip is HTML, which can't be saved as an image
-     directly. So we rebuild it on a canvas and export that.
-
-     The four constants drive all the geometry, so changing PHOTO or GAP
-     rescales the whole layout without any other edits:
-       PHOTO 600 — each square photo
-       PAD    34 — white border around the strip
-       GAP    20 — space between photos
-       FOOT   96 — footer band for the logo and date
-     That gives 668 x 2590px:
-       width  = 600 + 34x2
-       height = 34 + (600 x 4) + (20 x 3) + 96
-
-     ctx.filter takes the same string as CSS filter, so the downloaded
-     image gets the identical look you see on screen. save()/restore()
-     wraps it so the filter doesn't bleed onto the footer text.
-
-     Empty slots are drawn as grey blocks rather than skipped, keeping
-     the strip a consistent size even if you only took two photos.
-
-     Export works by pointing a temporary <a download> at the canvas's
-     data URL and clicking it in code — no server involved, the file is
-     generated entirely in the browser.                                  */
+  /* ── DOWNLOAD: FLATTEN THE STRIP INTO ONE PNG ────────  */
   downloadBtn.addEventListener('click', async function () {
-   /* Everything is wrapped so a failure says so out loud. Without this,
-      any error inside an async handler vanishes into the console and the
-      button just appears to do nothing.                                */
    try {
-    /* ── GEOMETRY MEASURED FROM THE LIVE PAGE ────────────
-       The download used to be laid out with its own constants — PAD 34,
-       GAP 20 and so on. Those were hand-picked to look like the CSS
-       (padding 18, gap 12) but weren't proportionally identical, so the
-       photos came out 89.8% of the strip's width instead of 88.0%. Tiny,
-       but enough to make stickers look smaller than in the preview.
-
-       Now nothing is hard-coded. We measure the real strip and every
-       slot with getBoundingClientRect(), then multiply by one SCALE
-       factor. The download is a scaled-up copy of exactly what you're
-       looking at — and it stays that way even if you edit the CSS.    */
+    /* ── GEOMETRY MEASURED FROM THE LIVE PAGE ────────────  */
     const rect = stripEl.getBoundingClientRect();
     if (!rect.width) throw new Error('the strip is not visible');
 
@@ -691,12 +471,6 @@ function initPhotoBooth() {
         h: r.height * SCALE
       };
     };
-    /* The hand-drawn look uses an eight-value border-radius, where each
-       corner is a different lopsided ellipse. Canvas can't draw that,
-       and getComputedStyle returns something like "255px 15px" — which
-       parseFloat reads as 255, ballooning the exported corners into
-       pill shapes. So the value is capped at a small fraction of the
-       box, giving gently rounded corners in the saved image.        */
     const radiusOf = function (el, w, h) {
       const raw = parseFloat(getComputedStyle(el).borderTopLeftRadius) * SCALE || 0;
       return Math.min(raw, Math.min(w, h) * 0.06);
@@ -739,10 +513,6 @@ function initPhotoBooth() {
       ctx.fillText(footEl.textContent.trim(), W / 2, f.y + f.h / 2);
     }
 
-    /* stickers last, so they sit on top exactly as they do on screen.
-       Measuring the placed elements rather than recomputing from the
-       fractions means position, size and aspect ratio all match by
-       construction — there's no second calculation to get wrong.      */
     const stickerEls = stripEl.querySelectorAll('.placed');
     for (const el of stickerEls) {
       const p   = rel(el);
@@ -754,29 +524,10 @@ function initPhotoBooth() {
       ctx.restore();
     }
 
-    /* ── SAVING IT ───────────────────────────────────────
-       The strip is a tall PNG, easily several megabytes. The old code
-       used toDataURL(), which encodes the whole thing as one enormous
-       base64 string and hands it to an <a download>. Desktop copes;
-       phones often don't — Safari in particular caps how big a URL can
-       be and simply ignores oversized ones, which is why nothing
-       happened when you tapped Download.
-
-       toBlob() produces real binary data instead, roughly a third the
-       size and far friendlier to memory. From there we try three routes
-       in order of how well each works on the device at hand.          */
+    /* ── SAVING IT ───────────────────────────────────────       */
     const name = 'photobooth-' + Date.now() + '.png';
     const blob = await new Promise(function (res) { c.toBlob(res, 'image/png'); });
     if (!blob) throw new Error('the image could not be created');
-
-    /* 1. PHONES — the native share sheet, which includes Save to Photos.
-          This is the only route on iOS that reliably lands the strip in
-          the camera roll rather than a Files folder.                   */
-    /* Desktop Chrome and Edge support navigator.share too, but there the
-       share sheet is the wrong answer — clicking Download should put a
-       file in your Downloads folder, not open a dialog. '(pointer:
-       coarse)' is true for fingers and false for a mouse, so this keeps
-       the share sheet on phones and tablets only.                      */
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
     if (isTouch && navigator.canShare) {
@@ -787,20 +538,16 @@ function initPhotoBooth() {
           toast('Saved.');
           return;
         } catch (err) {
-          if (err.name === 'AbortError') return;   // user tapped Cancel
-          /* anything else: fall through to the download route */
+          if (err.name === 'AbortError') return;   
         }
       }
     }
 
-    /* 2. DESKTOP AND ANDROID — an object URL is just a short pointer to
-          the blob, so there's no size limit to run into.               */
+    /* 2. DESKTOP AND ANDROID  */
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
 
     if (typeof a.download === 'undefined') {
-      /* 3. OLDER BROWSERS with no download attribute: show the image and
-            let the user save it by hand.                               */
       window.open(url, '_blank');
       toast('Press and hold the image to save it.', 5000);
       return;
@@ -808,7 +555,7 @@ function initPhotoBooth() {
 
     a.href = url;
     a.download = name;
-    document.body.appendChild(a);      // Firefox needs it in the document
+    document.body.appendChild(a);     
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
@@ -818,10 +565,6 @@ function initPhotoBooth() {
      toast('Could not save the strip — ' + (err.message || err.name) + '.', 5000);
    }
   });
-
-  /* roundRect(): traces a rounded rectangle path. Canvas has a built-in
-     ctx.roundRect() now, but it's recent enough that older phones miss
-     it — this works everywhere.                                       */
   function roundRect(ctx, x, y, w, h, r) {
     r = Math.min(r || 0, w / 2, h / 2);
     ctx.beginPath();
@@ -844,29 +587,20 @@ function initPhotoBooth() {
 
   /* ── TIDY UP ─────────────────────────────────────────
      Stopping every track releases the webcam and turns off the little
-     green camera light. Without this the camera can stay claimed after
-     you navigate away, which looks alarming and blocks other apps.
-     'pagehide' is used rather than 'unload' because it also fires when
-     a mobile browser backgrounds the tab.                               */
+     green camera light    */
   window.addEventListener('pagehide', function () {
     if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
   });
-
-  /* First paint: draws the four empty numbered slots and sets the
-     initial disabled state of the buttons.                              */
   render();
 }
 
 initPhotoBooth();
 
 
-/* ══ 5 MIN TIMER (timer.html only) ═══════════════════
-   Same pattern as the photo booth: everything lives inside one
-   function, and the guard on the first line means this file stays
-   safe to load on every page of the site.                        */
+/* ══ 5 MIN TIMER (timer.html only) */
 function initTimer() {
   const dial = document.getElementById('dial');
-  if (!dial) return;                       // not the timer page
+  if (!dial) return;                       
 
   const timeEl   = document.getElementById('time');
   const msgEl    = document.getElementById('message');
@@ -879,11 +613,7 @@ function initTimer() {
   const page     = document.querySelector('.timer-page');
   const toastEl  = document.getElementById('toast');
 
-  /* ── STATE ─────────────────────────────────────────
-     total    : the chosen length in seconds
-     endAt    : the clock time the timer should finish at
-     left     : seconds remaining, kept for pausing
-     running  : is the countdown currently ticking            */
+  /* ── STATE   */
   let total   = 5 * 60;
   let left    = total;
   let endAt   = 0;
@@ -900,12 +630,7 @@ function initTimer() {
     toast._t = setTimeout(function () { toastEl.classList.remove('show'); }, ms || 2600);
   };
 
-  /* ── THE RING ──────────────────────────────────────
-     An SVG circle can be drawn as a dashed line. If one dash is
-     exactly as long as the circle, the "dash" is the whole ring.
-     Shifting where that dash starts (stroke-dashoffset) then hides
-     part of it — which is how the arc appears to empty out.
-     The CSS rotates the SVG -90deg so it starts at the top.      */
+  /* ── THE RING ─   */
   const R = 108;
   const CIRC = 2 * Math.PI * R;
   ring.style.strokeDasharray = CIRC;
@@ -953,12 +678,7 @@ function initTimer() {
     plusBtn.disabled  = total >= MAX;
   }
 
-  /* ── THE COUNTDOWN ─────────────────────────────────
-     The remaining time is worked out from the clock, not by counting
-     how many times this function has run. setInterval is never exact,
-     and browsers slow timers right down in background tabs, so
-     counting ticks would drift by minutes over a long session.
-     Comparing against a fixed end time is always accurate.        */
+  /* ── THE COUNTDOWN ─── */
   function tick() {
     left = Math.max(0, Math.round((endAt - Date.now()) / 1000));
     paint();
@@ -996,14 +716,7 @@ function initTimer() {
     toast('Time is up. Well done.', 4000);
   }
 
-  /* ── THE CHIME ─────────────────────────────────────
-     Made with the Web Audio API rather than a sound file, so there is
-     nothing extra to download and it cannot fail to load. Two soft
-     notes, the second slightly higher, each fading out.
-     The AudioContext is created on the click that starts the timer —
-     browsers block audio that was not triggered by a user action.  */
-  /* Safari once called it webkitAudioContext, so pick whichever exists.
-     Storing it first means 'new AC()' reads clearly below.          */
+  /* ── THE CHIME   */
   const AC = window.AudioContext || window.webkitAudioContext;
   let audio = null;
   function chime() {
@@ -1024,10 +737,8 @@ function initTimer() {
     } catch (err) { /* no audio available — the visuals still work */ }
   }
 
-  /* ── CONTROLS ──────────────────────────────────────── */
+  /* ── CONTROLS  */
   startBtn.addEventListener('click', function () {
-    /* creating the AudioContext here means it is unlocked by a real
-       click, so the chime is allowed to play later */
     if (!audio) {
       try { audio = new AC(); }
       catch (err) { audio = null; }
@@ -1036,13 +747,6 @@ function initTimer() {
   });
 
   resetBtn.addEventListener('click', reset);
-
-  /* Changing the length used to be blocked while the clock ran. Now it
-     works either way:
-       stopped — set the length and reset the countdown to it
-       running — stretch or shrink the time REMAINING, and push the
-                 finish time out to match, so the current session just
-                 gets longer instead of restarting.                   */
   function setTotal(mins) {
     const next = Math.min(MAX, Math.max(MIN, Math.round(mins * 60)));
 
@@ -1064,14 +768,7 @@ function initTimer() {
 
   const bump = function (dir) { setTotal((total + dir * STEP) / 60); };
 
-  /* HOLD TO REPEAT
-     A tester wanted to add twenty minutes without twenty taps. Holding
-     the button waits 450ms — long enough that a normal tap isn't
-     mistaken for a hold — then fires every 120ms until released.
-
-     Pointer events cover mouse and touch together. The 'leave' and
-     'cancel' listeners matter: without them, sliding a finger off the
-     button would leave the timer stuck adding minutes forever.      */
+  /* HOLD TO REPEAT    */
   function holdToRepeat(btn, dir) {
     let startT = null, repeatT = null;
 
@@ -1083,7 +780,7 @@ function initTimer() {
     btn.addEventListener('pointerdown', function (e) {
       if (btn.disabled) return;
       e.preventDefault();
-      bump(dir);                                  // the first step is instant
+      bump(dir);                                 
       startT = setTimeout(function () {
         repeatT = setInterval(function () {
           if (btn.disabled) { stop(); return; }
@@ -1095,7 +792,7 @@ function initTimer() {
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
       btn.addEventListener(ev, stop);
     });
-    window.addEventListener('blur', stop);        // tab switched mid-hold
+    window.addEventListener('blur', stop);     
   }
 
   holdToRepeat(minusBtn, -1);
@@ -1119,9 +816,7 @@ function initTimer() {
 initTimer();
 
 
-/* ══ TASK MANAGER (tasks.html only) ══════════════════
-   Same pattern again: one function, guarded on the first line, so
-   this file stays safe to load on every page.                    */
+/* ══ TASK MANAGER (tasks.html only)       */
 function initTasks() {
   const listEl = document.getElementById('taskList');
   if (!listEl) return;                     // not the task manager page
@@ -1137,18 +832,10 @@ function initTasks() {
   const toastEl    = document.getElementById('toast');
 
   const KEY = 'helpful.tasks.v1';
-
-  /* One place for the length limits, used by the add form (via the
-     maxlength attribute set below) and by the rename prompts. Having
-     the number written down twice is what let renaming exceed it.  */
   const TITLE_MAX = 80;
   const STEP_MAX  = 90;
 
-  /* ── STATE ─────────────────────────────────────────
-     One array holds everything. Each assessment looks like:
-       { id, title, due, steps: [ { id, text, done } ] }
-     Same idea as the photo booth: the screen is only ever a drawing
-     of this array, so the two can't disagree.                    */
+  /* ── STATE        */
   let tasks = load();
 
   const toast = function (msg, ms) {
@@ -1161,12 +848,7 @@ function initTasks() {
 
   const uid = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); };
 
-  /* ── SAVING ────────────────────────────────────────
-     localStorage keeps the data in the browser after the tab closes.
-     It only stores text, so the array is converted to JSON on the way
-     out and parsed back on the way in. Both are wrapped in try/catch
-     because storage can be full or blocked in private browsing, and
-     a crash here would take the whole page down.                 */
+  /* ── SAVING    */
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(tasks)); }
     catch (err) { toast('Could not save — your browser is blocking storage.', 4000); }
@@ -1180,10 +862,7 @@ function initTasks() {
     } catch (err) { return []; }
   }
 
-  /* ── DUE DATES ─────────────────────────────────────
-     Both dates are flattened to midnight before comparing, so "due
-     today" stays today all day instead of flipping to "overdue" the
-     moment the clock passes the time you created it.             */
+  /*  DUE DATES         */
   function dueInfo(due, complete) {
     if (!due) return null;
     const d = new Date(due + 'T00:00:00');
@@ -1192,10 +871,6 @@ function initTasks() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const days = Math.round((d - today) / 86400000);
-
-    /* "in 3 days" is easy to read but useless for planning — you still
-       have to work out which day that is. Both are shown now: the
-       countdown for urgency, the real date for planning.            */
     const stamp = d.toLocaleDateString(undefined, {
       weekday: 'short', day: 'numeric', month: 'short'
     });
@@ -1214,22 +889,10 @@ function initTasks() {
     });
   };
 
-  /* ── PICKING A DATE ────────────────────────────────
-     A real <input type="date"> gives phones a native date wheel and
-     desktops a calendar, which beats typing. It's created, clicked and
-     thrown away each time rather than living in the page, so it can't
-     be tabbed into or styled by accident.
-
-     showPicker() is what actually opens the calendar without the user
-     having to hit the tiny icon, but Safari has been inconsistent
-     about supporting it. If it isn't there, or throws, we fall back to
-     a plain text prompt and validate the format ourselves.        */
+  /* ── PICKING A DATE     */
   function openDatePicker(current, done) {
     const input = document.createElement('input');
     input.type = 'date';
-
-    /* if the browser doesn't understand type="date" it silently becomes
-       a text box — that's the signal to skip straight to the fallback */
     if (input.type !== 'date') return askForDateText(current, done);
 
     input.value = current || '';
@@ -1270,7 +933,7 @@ function initTasks() {
     done(clean);
   }
 
-  /* ── DRAWING ───────────────────────────────────────── */
+  /* DRAWING  */
   function render() {
     listEl.innerHTML = '';
 
@@ -1333,7 +996,7 @@ function initTasks() {
     return tasks.filter(function (t) { return t.id === id; })[0];
   };
 
-  /* ── ADDING AN ASSESSMENT ──────────────────────────── */
+  /*  ADDING AN ASSESSMENT  */
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     const title = titleInput.value.trim();
@@ -1344,10 +1007,7 @@ function initTasks() {
     toast('Added. Now break it into steps.');
   });
 
-  /* ── EVERYTHING INSIDE A CARD ──────────────────────
-     One listener on the list handles all the buttons, because cards
-     are rebuilt on every render and listeners attached to them would
-     die immediately. Same event delegation as the photo booth.    */
+  /* ── EVERYTHING INSIDE A CARD    */
   listEl.addEventListener('click', function (e) {
     const card = e.target.closest('.task-card');
     if (!card) return;
@@ -1373,10 +1033,6 @@ function initTasks() {
     }
 
     if (act === 'due') {
-      /* A hidden date input is used rather than prompt(), so phones get
-         a proper date picker and there's no text to mis-type. Safari
-         is fussy about date inputs, so if the browser gives us nothing
-         usable we fall back to asking for YYYY-MM-DD as text.       */
       openDatePicker(t.due, function (val) {
         t.due = val || '';
         save(); render();
@@ -1384,10 +1040,6 @@ function initTasks() {
     }
 
     if (act === 'rename') {
-      /* prompt() has no maxlength, so the limit set on the add form was
-         easy to walk straight past when renaming. Trim to the same
-         number of characters here and say so, rather than silently
-         cutting the text off.                                        */
       const next = prompt('Rename this task:', t.title);
       if (next && next.trim()) {
         const clean = next.trim();
@@ -1435,10 +1087,7 @@ function initTasks() {
     toast('Cleared ' + (before - tasks.length) + ' finished.');
   });
 
-  /* ── REORDERING STEPS ──────────────────────────────
-     HTML5 drag and drop. dragstart remembers which step is moving,
-     dragover marks where it would land, and drop moves it in the
-     array — then the list is redrawn from the array as usual.     */
+  /* ── REORDERING STEPS  */
   let dragSid = null, dragCardId = null;
 
   listEl.addEventListener('dragstart', function (e) {
@@ -1488,20 +1137,11 @@ function initTasks() {
 
 initTasks();
 
-
-/* ══ INSTALLABLE APP ═════════════════════════════════
-   Runs on every page. Two jobs: register the service worker that makes
-   the site work offline and installable, and show iOS users how to add
-   it to their home screen — Android and desktop Chrome offer that
-   themselves, but iOS has never had an install prompt, so the only way
-   is Share ▸ Add to Home Screen and most people don't know that.    */
 function initPWA() {
-  /* Service workers only run over HTTPS (or localhost), so this simply
-     does nothing when the page is opened straight off the disk.      */
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').catch(function () {
-        /* nothing to do — the site works fine without offline support */
       });
     });
   }
@@ -1509,9 +1149,6 @@ function initPWA() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-  /* 'standalone' means the app was opened from the home screen rather
-     than inside the browser. iOS uses its own navigator.standalone;
-     everyone else uses the display-mode media query.                 */
   const standalone = window.matchMedia('(display-mode: standalone)').matches ||
                      navigator.standalone === true;
 

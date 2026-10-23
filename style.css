@@ -1,4 +1,4 @@
-/* ── TOKENS ─────────────────────────────────────────── */
+/*  TOKENS  */
 :root {
   --cream:   #F5F0E8;
   --blue:    #C8D8E8;
@@ -10,7 +10,7 @@
   --font-hand:    'Caveat', cursive;
 }
 
-/* ── BASE ───────────────────────────────────────────── */
+/*  BASE  */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
@@ -24,12 +24,7 @@ body {
   color: var(--dark);
 }
 
-/* ── NAV ────────────────────────────────────────────── */
-/* Three columns rather than space-between. The old version pushed an
-   empty div left and the hamburger right, which left the logo slightly
-   off-centre because the empty div has no width but the button does.
-   With 1fr / auto / 1fr the outer columns are always equal, so the
-   middle one is dead centre no matter how wide the button gets.     */
+/*  NAV  */
 .nav-bar {
   position: fixed;
   top: 0;
@@ -44,11 +39,6 @@ body {
   align-items: center;
 }
 
-/* Caveat instead of Space Grotesk, so the logo matches the hand-drawn
-   look of the illustrations and headings rather than fighting it.
-   Caveat runs smaller and tighter than Space Grotesk, so the size comes
-   down and the wide letter-spacing goes — spacing out a joined script
-   pulls the letters apart and looks broken.                         */
 .nav-logo {
   grid-column: 2;
   justify-self: center;
@@ -128,7 +118,7 @@ body {
 }
 .overlay.open { display: block; }
 
-/* ── SECTIONS (scroll snap) ─────────────────────────── */
+/*  SECTIONS (scroll snap)  */
 .snap-section {
   scroll-snap-align: start;
   min-height: 100vh;
@@ -139,7 +129,7 @@ body {
   overflow: hidden;
 }
 
-/* ── HERO ───────────────────────────────────────────── */
+/*  HERO  */
 /* Only this section gets the auto-cropping background image.
    Sections 2-4 keep their plain background colours.            */
 .hero {
@@ -152,8 +142,8 @@ body {
     linear-gradient(rgba(255, 255, 255, 0.294), rgba(255, 255, 255, 0.55)),
     url('backgroundHERO3.png');
 
-  background-size: cover;              /* fill the section, crop the overflow */
-  background-position: center center;  /* which part of the image survives */
+  background-size: cover;       
+  background-position: center center; 
   background-repeat: no-repeat;
 
   display: flex;
@@ -197,10 +187,8 @@ body {
   color: var(--dark);
 }
 
-/* "Stuck?" sits a little smaller than "Start small." */
 .hero-lead { font-size: 44px; }
 
-/* same size as "Stuck?" */
 .hero-sub {
   font-family: var(--font-hand);
   font-size: 44px;
@@ -252,7 +240,7 @@ body {
   object-position: bottom;
 }
 
-/* ── SECTION 2 — about ──────────────────────────────── */
+/*  SECTION 2  about  */
 .section-about {
   /* same hand-drawn background as the timer, task and booth pages,
      but with a stronger white veil (.82) because these sections have
@@ -326,11 +314,8 @@ body {
   display: block;
 }
 
-/* ── SECTION 3 — tools ──────────────────────────────── */
+/*  SECTION 3 tools  */
 .section-tools {
-  /* same hand-drawn background as the timer, task and booth pages,
-     but with a stronger white veil (.82) because these sections have
-     more text to read than the tool pages                        */
   background-color: var(--cream);
   background-image:
     linear-gradient(rgba(255, 255, 255, .82), rgba(255, 255, 255, .82)),
@@ -341,7 +326,6 @@ body {
   background-attachment: fixed;
 }
 
-/* hand-drawn outline, same as the task cards and photo strip */
 .tool-card {
   position: relative;
   background: var(--white);
@@ -355,7 +339,6 @@ body {
 }
 .tool-card:hover { transform: translateY(-4px); }
 
-/* a second, fainter outline so it looks drawn twice */
 .tool-card::after {
   content: '';
   position: absolute;
@@ -400,11 +383,8 @@ body {
   font-size: 24px;
 }
 
-/* ── SECTION 4 — closing ────────────────────────────── */
+/* SECTION 4  closing  */
 .section-close {
-  /* same hand-drawn background as the timer, task and booth pages,
-     but with a stronger white veil (.82) because these sections have
-     more text to read than the tool pages                        */
   background-color: var(--cream);
   background-image:
     linear-gradient(rgba(255, 255, 255, .82), rgba(255, 255, 255, .82)),
@@ -415,7 +395,7 @@ body {
   background-attachment: fixed;
 }
 
-/* ── ANIMATIONS ─────────────────────────────────────── */
+/*  ANIMATIONS  */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -428,10 +408,8 @@ body {
 .delay-2 { animation-delay: 0.3s;  }
 .delay-3 { animation-delay: 0.45s; }
 
-/* ── MOBILE ─────────────────────────────────────────── */
+/*  MOBILE  */
 @media (max-width: 767px) {
-  /* the logo is the tallest thing in the bar, so shrinking it is what
-     actually reclaims space on a phone */
   .nav-logo { font-size: 32px; }
 
   .hide-mobile { display: none !important; }
@@ -441,10 +419,6 @@ body {
   .hero {
     flex-direction: column;
     min-height: 100vh;
-
-    /* Phones are tall and narrow, so 'cover' crops the sides hard.
-       Anchoring to the top keeps the important part of the image
-       visible. Change to 'center' or '50% 30%' to taste.          */
     background-position: center top;
   }
   .hero-text {
@@ -462,7 +436,7 @@ body {
   .section-heading { font-size: 34px; }
 }
 
-/* ══ PHOTO BOOTH (breathing.html) ═══════════════════ */
+/*  PHOTO BOOTH (breathing.html)  */
 /* Only used by the photo booth page. Class names are
    unique to that page, so nothing here affects the
    home page, timer or task manager.                  */
@@ -470,18 +444,17 @@ body {
   min-height: 100vh;
   padding: 120px 24px 64px;
 
-  /* fallback — shows if the image is missing or still loading */
+  /* fallback  shows if the image is missing or still loading */
   background-color: var(--cream);
 
-  /* white veil on top of the photo so the strip and buttons stay readable */
   background-image:
     linear-gradient(rgba(255, 255, 255, .6), rgba(255, 255, 255, .6)),
     url('backgroundHERO.png');
 
-  background-size: cover;            /* fill the page, crop the overflow */
+  background-size: cover;            
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;      /* stays still while the page scrolls */
+  background-attachment: fixed;      
 }
 
 .booth-title {
@@ -512,17 +485,10 @@ body {
 
 
 
-/* ── camera stage ─────────────────────────────────── */
+/*  camera stage  */
 .stage-col { flex: 1 1 420px; max-width: 480px; }
 
-/* THE CAMERA STAGE
-   'position: relative' is essential — every overlay below (countdown,
-   flash, shot counter) is positioned absolutely INSIDE this box, and
-   absolute positioning anchors to the nearest positioned ancestor.
-   'aspect-ratio: 1/1' forces a perfect square regardless of screen
-   width, so the preview shows exactly the framing you'll capture.
-   'overflow: hidden' clips the video's cropped edges to the rounded
-   corners instead of letting them poke out.                          */
+/* THE CAMERA STAGE    */
 .stage {
   position: relative;
   width: 100%;
@@ -536,12 +502,7 @@ body {
 
 /* THE VIDEO FEED
    Webcams output 4:3 or 16:9, never square. 'object-fit: cover' scales
-   the feed until it fills the square box and crops the overflow — the
-   same auto-crop idea as background-size: cover, but for media
-   elements. Without it the video would squash and look distorted.
-   'scaleX(-1)' flips it horizontally so it behaves like a mirror;
-   raising your right hand moves the right side of the screen. The
-   capture code applies the same flip so photos match the preview.     */
+   the feed until it fills the square box and crops the overflow  */
 .stage video {
   width: 100%; height: 100%;
   object-fit: cover;                 /* auto-crop the feed to the square */
@@ -583,23 +544,13 @@ body {
   100% { transform: scale(.85); opacity: .15; }
 }
 
-/* SHUTTER FLASH — full screen.
-   'position: fixed' pins it to the window rather than the camera box,
-   so the whole display turns white. z-index 400 puts it above the nav
-   (100), overlay (150), side menu (200) and toast (300).
-   'pointer-events: none' means clicks pass straight through it.
-
-   This doubles as a light source: a white screen at arm's length
-   genuinely brightens your face, which is why the JS holds the flash
-   for a moment BEFORE capturing rather than firing them together.     */
+/* SHUTTER FLASH — full screen. */
 .booth-flash {
   position: fixed; inset: 0;
   background: #fff; opacity: 0; pointer-events: none;
   z-index: 400;
 }
 .booth-flash.fire { animation: flashAnim .7s ease-out; }
-/* Holds at full white for the first 45% (~315ms) so the camera has
-   time to meter the extra light, then fades out.                     */
 @keyframes flashAnim {
   0%   { opacity: 1; }
   45%  { opacity: 1; }
@@ -615,7 +566,7 @@ body {
 }
 .shot-pip.show { opacity: 1; }
 
-/* ── controls ─────────────────────────────────────── */
+/*  controls  */
 .controls { margin-top: 22px; display: flex; flex-direction: column; gap: 16px; }
 .btn-row  { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -646,7 +597,7 @@ body {
 .chip:hover { border-color: var(--dark); }
 .chip[aria-pressed="true"] { background: var(--dark); color: #fff; border-color: var(--dark); }
 
-/* ── sticker tray ─────────────────────────────────── */
+/* ── sticker tray  */
 .stickers { display: flex; flex-wrap: wrap; gap: 8px; }
 .sticker-tray { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
 
@@ -656,22 +607,13 @@ body {
   border-radius: 12px; cursor: pointer; transition: .15s;
 }
 .sticker-tray button:hover { transform: translateY(-2px); border-color: var(--dark); }
-/* pointer-events: none so a click always registers on the button,
-   never on the image inside it */
 .sticker-tray img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
-
 .sticker-clear { font-size: 13px; padding: 9px 18px; }
-/* .bth sets display:inline-flex, which would otherwise beat the plain
-   'hidden' attribute and leave the button visible. This restores it.  */
 .sticker-clear[hidden] { display: none; }
 
-/* ── photo strip ──────────────────────────────────── */
+/* ── photo strip  */
 .strip-col { flex: 0 0 300px; }
 
-/* 'position: relative' turns the strip into the coordinate system for
-   placed stickers — their percentage positions are measured against
-   this box, which is what lets the same numbers map onto the download
-   canvas at a completely different pixel size.                        */
 .strip {
   position: relative;
   background: var(--white);
@@ -681,24 +623,10 @@ body {
   display: flex; flex-direction: column; gap: 12px;
 }
 
-/* A PLACED STICKER
-   left/top are percentages of the strip, and translate(-50%,-50%)
-   shifts the sticker so those percentages point at its CENTRE rather
-   than its top-left corner — much more intuitive to drag.
-   'touch-action: none' stops phones scrolling the page mid-drag.      */
+/* A PLACED STICKER   */
 .placed {
   position: absolute;
-  /* set by script.js from STICKER_W so the preview and the downloaded
-     PNG can never disagree. The 22% is only a fallback.              */
   width: var(--sticker-w, 22%);
-
-  /* translateZ(0) forces the sticker onto its own compositing layer.
-     Without it, dragging an element that has a drop-shadow leaves
-     smears of the old shadow behind — the browser repaints the new
-     position but doesn't always clear the area the shadow used to
-     cover. On desktop a scroll cleans it up; on phones it doesn't.
-     will-change tells the browser this element is about to move, so
-     it prepares the layer before the first drag rather than mid-drag. */
   transform: translate(-50%, -50%) translateZ(0);
   will-change: transform, left, top;
 
@@ -709,17 +637,11 @@ body {
   filter: drop-shadow(0 2px 5px rgba(0,0,0,.25));
 }
 
-/* belt and braces: drop the shadow entirely while the sticker is
-   actually moving, then bring it back on release */
 .placed.grabbing {
   cursor: grabbing;
   filter: none;
 }
-/* ONE PHOTO SLOT
-   Four of these stack vertically to form the strip. Each is locked
-   square by aspect-ratio, so the strip keeps its shape whether it
-   holds photos or empty placeholders. The diagonal stripe pattern is
-   the empty state — it disappears once an <img> is dropped in.       */
+/* ONE PHOTO SLOT  */
 .slot {
   position: relative;
   width: 100%;
@@ -729,9 +651,7 @@ body {
   background: repeating-linear-gradient(45deg, #f2f0eb, #f2f0eb 8px, #ebe8e2 8px, #ebe8e2 16px);
   display: flex; align-items: center; justify-content: center;
 }
-/* Photos are already cropped square by the canvas code, so object-fit
-   here is a safety net — if anything non-square ever lands in a slot
-   it gets cropped rather than stretched.                             */
+
 .slot img {
   width: 100%; height: 100%;
   object-fit: cover;                 /* auto-crop to the square */
@@ -779,9 +699,8 @@ body {
   .countdown { font-size: 110px; }
 }
 
-/* ══ TIMER (timer.html) ══════════════════════════════ */
-/* Class names are unique to this page, so nothing here
-   affects the home page, task manager or photo booth.  */
+/*  TIMER (timer.html)  */
+
 .timer-page {
   min-height: 100vh;
   padding: 130px 24px 64px;
@@ -789,13 +708,10 @@ body {
   flex-direction: column;
   align-items: center;
 
-  /* fallback — shows if the image is missing or still loading */
+  /* fallback  shows if the image is missing or still loading */
   background-color: var(--cream);
 
-  /* white veil on top of the photo so the dial and buttons stay readable.
-     Lower numbers = more of the photo shows through. .78 hid it too
-     much, so it's back down to .55 — a little stronger than the .6 it
-     started at.                                                       */
+
   background-image:
     linear-gradient(rgba(255, 255, 255, .55), rgba(255, 255, 255, .55)),
     url('backgroundHERO.png');
@@ -913,11 +829,6 @@ body {
 
 .timer-actions { display: flex; gap: 12px; }
 .timer-actions .bth { min-width: 140px; justify-content: center; }
-
-/* The adjust row now stays visible while the clock runs, so time can
-   be added mid-session. Only the presets hide, because tapping "25 min"
-   halfway through a run is far more likely to be a mistake than a
-   deliberate choice.                                                */
 .timer-page.running .timer-presets { display: none; }
 .timer-page.running .adjust { opacity: .85; }
 
@@ -927,19 +838,13 @@ body {
   .time { font-size: 46px; }
 }
 
-/* ══ TASK MANAGER (tasks.html) ═══════════════════════ */
-/* Class names are unique to this page.                 */
+/*  TASK MANAGER (tasks.html)  */
 .tasks-page {
   min-height: 100vh;
   padding: 130px 24px 80px;
 
   /* fallback — shows if the image is missing or still loading */
   background-color: var(--cream);
-
-  /* white veil on top of the photo so the cards and text stay readable.
-     Lower numbers = more of the photo shows through. .78 hid it too
-     much, so it's back down to .55 — a little stronger than the .6 it
-     started at.                                                       */
   background-image:
     linear-gradient(rgba(255, 255, 255, .55), rgba(255, 255, 255, .55)),
     url('backgroundHERO.png');
@@ -960,7 +865,7 @@ body {
   max-width: 480px; margin: 0 auto 30px;
 }
 
-/* ── overall progress ─────────────────────────────── */
+/*  overall progress  */
 .overall {
   max-width: 640px; margin: 0 auto 20px;
   background: var(--white); border-radius: 14px;
@@ -985,7 +890,7 @@ body {
 }
 .task-card.complete .bar-fill { background: #6FAE7C; }
 
-/* ── add form ─────────────────────────────────────── */
+/*  add form  */
 .add-card {
   max-width: 640px; margin: 0 auto 26px;
   background: var(--white); border-radius: 16px;
@@ -1004,7 +909,7 @@ body {
 .field:focus { outline: 2px solid var(--dark); outline-offset: 1px; }
 .field-date { flex: 0 0 170px; width: auto; }
 
-/* ── one assessment ───────────────────────────────── */
+/*  one assessment  */
 .task-list { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
 .task-card {
@@ -1012,9 +917,7 @@ body {
   padding: 18px;
   animation: cardIn .35s ease both;
 }
-/* the end state has to include the tilt, otherwise 'transform: none'
-   here overrides the rotate set on .task-card and the card snaps
-   straight the moment the animation finishes                        */
+
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(10px) rotate(.2deg); }
   to   { opacity: 1; transform: rotate(.2deg); }
@@ -1046,7 +949,7 @@ body {
 
 .count { font-size: 13px; color: var(--grey); margin: 10px 0 6px; }
 
-/* ── steps ────────────────────────────────────────── */
+/*  steps  */
 .steps { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 
 .step {
@@ -1088,9 +991,9 @@ body {
   .field-date { flex: 1 1 100%; }
 }
 
-/* ══ INSTALL BANNER (PWA) ════════════════════════════ */
+/*  INSTALL BANNER (PWA) */
 /* Shown only on iOS in Safari, because iOS gives no built-in
-   install prompt — the user has to do it manually.       */
+   install prompt  the user has to do it manually.       */
 .install-hint {
   position: fixed; left: 12px; right: 12px; bottom: 12px;
   z-index: 350;
@@ -1115,14 +1018,7 @@ body {
   font-size: 18px; color: #b9b5ad; padding: 4px 6px; align-self: flex-start;
 }
 
-/* ══ TIMER — DOODLE LOOK (optional) ══════════════════
-   Everything here is scoped to .timer-dial.doodle, so removing the
-   word "doodle" from the class in timer.html turns all of it off and
-   the clean version comes back. Nothing below affects any other page.
-
-   The wobble comes from an SVG filter defined in timer.html: random
-   noise is used to nudge each pixel of the line sideways, which makes
-   a perfect circle look like it was drawn by hand.                  */
+/*  TIMER  DOODLE LOOK (optional)           */
 
 /* the extra sketch pass is invisible unless the doodle look is on */
 .ring-sketch { display: none; }
@@ -1153,9 +1049,6 @@ body {
 
 /* the whole dial sits very slightly crooked, like it was stuck on */
 .timer-dial.doodle { transform: rotate(-1.2deg); }
-
-/* handwritten digits — Caveat has a smaller x-height than Space
-   Grotesk, so the size goes up to compensate */
 .timer-dial.doodle .time {
   font-family: var(--font-hand);
   font-size: 78px;
@@ -1168,8 +1061,7 @@ body {
   transform: rotate(1.2deg);   /* straighten the text back up */
 }
 
-/* a soft paper-coloured disc behind the numbers so they sit on
-   something rather than floating on the background photo */
+
 .timer-dial.doodle .dial-face::before {
   content: '';
   position: absolute;
@@ -1185,19 +1077,7 @@ body {
 
 
 
-/* ── HAND-DRAWN BOX EDGES (tasks page) ──────────────
-   All three boxes on the task manager keep their white background and
-   get a drawn-looking outline instead of a neat rounded rectangle.
-
-   The trick is border-radius with eight values instead of four. The
-   part before the slash sets the horizontal radius of each corner and
-   the part after sets the vertical, so every corner is a different
-   lopsided curve. Wildly mismatched numbers make the edge wander the
-   way a pen does.
-
-   ::after draws a second outline slightly offset and rotated, which
-   reads as the pen going round twice. It's pointer-events: none so it
-   can never block a click.                                          */
+/* HAND-DRAWN BOX EDGES (tasks page)          */
 
 .overall,
 .add-card,
@@ -1225,25 +1105,13 @@ body {
 .add-card  { transform: rotate(-.25deg); }
 .task-card { transform: rotate(.2deg); }
 .overall   { transform: rotate(-.15deg); }
-
-/* the completed state dimmed the whole card, which also faded the
-   outline — keep the drawn edge and fade only the contents */
 .task-card.complete { opacity: 1; }
 .task-card.complete .card-head,
 .task-card.complete .steps,
 .task-card.complete .count,
 .task-card.complete .due { opacity: .6; }
 
-/* ── HAND-DRAWN BOX EDGES (photo booth) ─────────────
-   Same lopsided border-radius as the task page: eight values instead
-   of four, so every corner curves differently and the edge wanders
-   like a pen line.                                                  */
-
-/* THE PHOTO STRIP — full treatment, matching the task cards.
-   Deliberately NOT rotated. Sticker dragging and the download both
-   measure this box with getBoundingClientRect(), which reports the
-   bounding box of a rotated element rather than the element itself.
-   A tilt here would quietly throw off both.                        */
+/* ── HAND-DRAWN BOX EDGES (photo booth)                    */
 .strip {
   border: 2px solid var(--dark);
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
@@ -1260,11 +1128,7 @@ body {
   pointer-events: none;
 }
 
-/* THE CAMERA BOX — keeps its white frame, which now reads as a
-   hand-cut photo border. The drawn line uses 'outline' rather than
-   ::after because .stage has overflow: hidden to clip the video, and
-   that would crop a pseudo-element sitting outside it. An outline is
-   drawn outside the border box and isn't clipped that way.         */
+/* THE CAMERA BOX        */
 .stage {
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   outline: 2px solid var(--dark);
@@ -1343,9 +1207,6 @@ body {
 .why[open] summary { margin-bottom: 8px; }
 .why p { margin: 0 0 8px; line-height: 1.6; }
 .why em { font-style: normal; font-weight: 600; color: var(--dark); }
-
-/* the adjust buttons need a bigger touch target for hold-to-repeat,
-   and no text selection when held down */
 .adj-btn {
   user-select: none; -webkit-user-select: none;
   touch-action: manipulation;
